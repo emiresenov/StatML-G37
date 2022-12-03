@@ -1,43 +1,47 @@
 import pandas as pd
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-import graphviz
 
-from sklearn import tree
-from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
+import sklearn.preprocessing as skl_pre
+import sklearn.model_selection as skl_ms
+from sklearn.ensemble import RandomForestClassifier
 
 np.random.seed(1)
 
-dir = '/home/toidface/Documents/ML_proj/Tree based/RandomForest/'
 Train = pd.read_csv("/home/toidface/Documents/ML_proj/train.csv")
-# print(Train.shape)
+print(Train.shape)
 
-trainIndex = np.random.choice(Train.shape[0], size=250, replace=False)
-train = Train.iloc[trainIndex]
-test = Train.iloc[~Train.index.isin(trainIndex)]
-Y_train = train['Lead']
-X_train = train.drop(columns=['Lead'])
-# print(X_train)
+Y_train = Train['Lead']
+X_train = Train.drop(columns=['Lead'])
+# 1. Use scaler on the data set (just parameters)
+scaler = skl_pre.StandardScaler().fit(X_train)
+# 2. Scale the training data
+X_train_norm = scaler.transform(X_train)
 
-# First clear the output-file,
-output_clear = open(dir + 'output.txt', 'w')
-output_clear.write(' ')
+# k-fold runs
+n_fold = 10
+cv = skl_ms.KFold(n_splits=n_fold, random_state=2, shuffle=True)
+K = np.arange(1, 75)
+misclassification = np.zeros(len(K))
+print(cv)
 # then run for different depths
-for i in range(50, 350, 50):
-    model = RandomForestClassifier(n_estimators=i)
-    model.fit(X_train, Y_train)
+for train_index, val_index in cv.split(X_train):
+    x_train, x_val = X_train.iloc[train_index], X_train.iloc[val_index]
+    y_train, y_val = Y_train.iloc[train_index], Y_train.iloc[val_index]
 
-# Test the model
-    Y_test = test['Lead']
-    X_test = test.drop(columns=['Lead'])
-    Y_predict = model.predict(X_test)
+    # Normalise
+    X_train_norm = scaler.transform(x_train)
+    X_val_norm = scaler.transform(x_val)
+    for j, k in enumerate(K):
+        model = RandomForestClassifier(n_estimators=k)
+        model.fit(X_train_norm, y_train)
+        prediction = model.predict(X_val_norm)
+        misclassification[j] += np.mean(prediction != y_val)
 
 # Save Acc. rate & crosstab to File
-    output = open(dir + 'output.txt', 'a')
-    output.write('Res for tree-i:th:' + str(i) + "\n")
-    output.write('Test tree numbers:' + str(model.get_params()) + "\n")
-    output.write('Accuracy rate of: '
-                 + str((int)(100 * np.mean(Y_predict == Y_test))) + "\n")
-    output.write(
-        str(100*pd.crosstab(Y_predict, Y_test, normalize='index')) + "\n\n\n")
+misclassification /= n_fold
+plt.plot(K, misclassification)
+plt.title('Cross validation error for DecisionTree')
+plt.xlabel('No estimators')
+plt.ylabel('Validation error')
+plt.show()
