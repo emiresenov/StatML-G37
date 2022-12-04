@@ -37,8 +37,7 @@ for train_index, val_index in cv.split(X_train):
     X_val_norm = scaler.transform(x_val)
     for j, k in enumerate(K):
         model = RandomForestClassifier(
-            n_estimators=k, max_depth=14, n_jobs=2,
-            min_impurity_decrease=0.00007)
+            n_estimators=k, max_depth=7, n_jobs=2)
         model.fit(X_train_norm, y_train)
         prediction = model.predict(X_val_norm)
         misclassification[j] += np.mean(prediction != y_val)

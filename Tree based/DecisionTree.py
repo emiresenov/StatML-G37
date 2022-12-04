@@ -19,10 +19,14 @@ X_train = Train.drop(columns=['Lead'])
 scaler = skl_pre.StandardScaler().fit(X_train)
 # 2. Scale the training data
 X_train_norm = scaler.transform(X_train)
+
+# First clear the output-file,
+output_clear = open(dir + 'output.txt', 'w')
+output_clear.write(' ')
 # k-fold runs
 n_fold = 10
 cv = skl_ms.KFold(n_splits=n_fold, random_state=2, shuffle=True)
-K = np.arange(2, 75)
+K = np.arange(1, 75)
 misclassification = np.zeros(len(K))
 print(cv)
 # then run for different depths
@@ -35,15 +39,26 @@ for train_index, val_index in cv.split(X_train):
     X_val_norm = scaler.transform(x_val)
     for j, k in enumerate(K):
         model = tree.DecisionTreeClassifier(
-            max_leaf_nodes=k)
+            max_depth=k)
         model.fit(X_train_norm, y_train)
         prediction = model.predict(X_val_norm)
         misclassification[j] += np.mean(prediction != y_val)
+        # if the tree-structure is of interest
+        dot_data = tree.export_graphviz(model,
+                                        out_file=dir + "None_" + str(k),
+                                        feature_names=X_train.columns,
+                                        class_names=model.classes_,
+                                        filled=True,
+                                        rounded=True,
+                                        leaves_parallel=True,
+                                        proportion=True)
+
+        graph = graphviz.Source(dot_data)
 
 # Save Acc. rate & crosstab to File
 misclassification /= n_fold
 plt.plot(K, misclassification)
 plt.title('Cross validation error for DecisionTree')
-plt.xlabel('max_leaf_nodes')
+plt.xlabel('max_depth')
 plt.ylabel('Validation error')
 plt.show()
