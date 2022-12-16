@@ -1,5 +1,5 @@
 # StatML-G37
-Statistical Machine Learning group project by group 37
+Statistical Machine Learning project by group 37
 
 ## Contributors
 - Dimitros Petropoulos
