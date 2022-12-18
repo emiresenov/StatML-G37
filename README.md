@@ -2,6 +2,6 @@
 Statistical Machine Learning project by group 37
 
 ## Contributors
-- Dimitros Petropoulos
+- Dimitrios Petropoulos
 - Aleksander Senek
 - Emir Esenov
